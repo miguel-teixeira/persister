@@ -1,6 +1,8 @@
 <?php
 namespace Persister\Contracts;
 
+use Illuminate\Contracts\Events\Dispatcher;
+
 interface Persister
 {
     public function insert(Record $record);
@@ -12,4 +14,6 @@ interface Persister
     public function usesTransaction($boolean);
 
     public function setMaxStatementsLimit($maxStatementsLimit);
+
+    public function setEventDispatcher(Dispatcher $dispatcher);
 }

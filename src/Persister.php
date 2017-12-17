@@ -3,6 +3,7 @@
 namespace Persister;
 
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Persister\Contracts\Record;
 use Persister\Contracts\Persister as PersisterInterface;
 
@@ -13,6 +14,8 @@ abstract class Persister implements PersisterInterface
     protected $usesTransaction = false;
 
     protected $maxStatementsLimit = 500;
+
+    protected $eventDispatcher;
 
     public function insert(Record $record)
     {
@@ -45,6 +48,11 @@ abstract class Persister implements PersisterInterface
     public function setMaxStatementsLimit($maxStatementsLimit)
     {
         $this->maxStatementsLimit = $maxStatementsLimit;
+    }
+
+    public function setEventDispatcher(Dispatcher $dispatcher)
+    {
+        $this->eventDispatcher = $dispatcher;
     }
 
     abstract protected function discoverExistingRecords();
