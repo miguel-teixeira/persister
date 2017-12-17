@@ -3,6 +3,7 @@
 namespace Persister;
 
 
+use Exception;
 use PDO;
 use Persister\contracts\Grammar;
 use Persister\events\RecordInserted;
@@ -86,10 +87,10 @@ class SqlPersister extends Persister
             }
 
             $this->commitTransaction();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->rollbackTransaction();
 
-            throw $e;
+            throw ($e);
         }
     }
 
@@ -114,14 +115,13 @@ class SqlPersister extends Persister
         }
     }
 
-
     protected function dispatchEvents()
     {
         foreach ($this->records as $record) {
             if ($record->getOperation() === 'update') {
-                event(new RecordUpdated($record->getRecord()));
+                $this->eventDispatcher->dispatch(new RecordUpdated($record->getRecord()));
             } else {
-                event(new RecordInserted($record->getRecord()));
+                $this->eventDispatcher->dispatch(new RecordInserted($record->getRecord()));
             }
         }
     }
