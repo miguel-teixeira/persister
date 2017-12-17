@@ -1,5 +1,5 @@
 {
-  "name": "marauder/persister",
+  "name": "miguel-teixeira/persister",
   "require-dev": {
     "illuminate/database": "^5.5",
     "illuminate/support": "^5.5",
