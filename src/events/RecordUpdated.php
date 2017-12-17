@@ -12,6 +12,5 @@ class RecordUpdated
     public function __construct(Record $record)
     {
         $this->record = $record;
-        dump('record update was dispatched');
     }
 }
