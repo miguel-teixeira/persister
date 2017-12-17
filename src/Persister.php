@@ -30,9 +30,11 @@ abstract class Persister implements PersisterInterface
 
         $this->resolveInsertOrUpdateOperations($uids);
 
-//        $this->persistRecords();
+        $this->persistRecords();
 
         $this->dispatchEvents();
+
+        $this->clearRecords();
     }
 
     public function usesTransaction($boolean)
@@ -52,4 +54,9 @@ abstract class Persister implements PersisterInterface
     abstract protected function persistRecords();
 
     abstract protected function dispatchEvents();
+
+    protected function clearRecords()
+    {
+        $this->records = [];
+    }
 }
