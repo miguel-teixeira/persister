@@ -78,15 +78,19 @@ class SqlPersister extends Persister
                 : $this->grammar->compileInsert($record->getRecord());
         }
 
-        $statementsChucks = array_chunk($statements, $this->maxStatementsLimit);
+        try {
+            $this->beginTransaction();
 
-        $this->beginTransaction();
+            foreach ($statements as $statement) {
+                $this->pdo->exec($statement);
+            }
 
-        foreach ($statementsChucks as $statementsChuck) {
-            $this->pdo->exec(implode(';', $statementsChuck));
+            $this->commitTransaction();
+        } catch (\Exception $e) {
+            $this->rollbackTransaction();
+
+            throw $e;
         }
-
-        $this->commitTransaction();
     }
 
     protected function beginTransaction()
@@ -102,6 +106,14 @@ class SqlPersister extends Persister
             $this->pdo->commit();
         }
     }
+
+    protected function rollbackTransaction()
+    {
+        if ($this->usesTransaction) {
+            $this->pdo->rollBack();
+        }
+    }
+
 
     protected function dispatchEvents()
     {
