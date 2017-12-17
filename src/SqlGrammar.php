@@ -30,7 +30,10 @@ class SqlGrammar implements Grammar
 
         unset($recordData['updated_at']);
 
-        $columns = array_keys($recordData);
+        $columns = array_map(function ($column) {
+            return $this->wrapInBackticks($column);
+        }, array_keys($recordData));
+
         $values = array_values($recordData);
 
         if ($record->usesUpdatedAt()) {
@@ -50,7 +53,10 @@ class SqlGrammar implements Grammar
 
     public function compileInsert(Record $record)
     {
-        $columns = array_keys($record->getData());
+        $columns = array_map(function ($column) {
+            return $this->wrapInBackticks($column);
+        },  array_keys($record->getData()));
+
         $values = array_map(function ($value) {
             return $this->pdo->quote($value);
         }, array_values($record->getData()));
@@ -68,5 +74,9 @@ class SqlGrammar implements Grammar
         return 'INSERT INTO ' . $record->getTable() .
             ' (' . implode(', ', $columns) . ')' .
             ' VALUES (' . implode(', ', $values) . ')';
+    }
+
+    protected function wrapInBackticks($column) {
+        return '`' . implode('`.`', explode('.', $column)) . '`';
     }
 }
