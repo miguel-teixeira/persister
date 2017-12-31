@@ -12,6 +12,18 @@ interface Record
 
     public function getData();
 
+    public function getDataWithTimestamps();
+
+    public function getDataWithUpdatedAt();
+
+    public function getOriginalData();
+
+    public function setOriginalData($originalData);
+
+    public function hasChangedData();
+
+    public function setCasts(array $casts);
+
     public function usesUpdatedAt($boolean = null);
 
     public function usesCreatedAt($boolean = null);
