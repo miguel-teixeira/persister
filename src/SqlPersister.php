@@ -103,16 +103,17 @@ class SqlPersister extends Persister
         foreach ($this->records as $record) {
             $tableName = strtolower($record->getTable());
 
+            if (!array_key_exists($tableName, $inserts)) {
+                $inserts[$tableName] = [];
+            }
+
             if (!$record->hasOriginalData()) {
-                if (!array_key_exists($tableName, $inserts)) {
-                    $inserts[$tableName] = [];
-                }
 
                 $inserts[$tableName][] = $record;
             }
         }
 
-        return $inserts;
+        return array_filter($inserts);
     }
 
     protected function buildInsertStatements()
