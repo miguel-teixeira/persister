@@ -114,8 +114,6 @@ class Record implements RecordInterface
         $this->hasChangedData = count($this->changedData) > 0;
 
         $this->hasOriginalData = !empty($this->originalData);
-
-//        $this->checkDirty();
     }
 
     public function hasOriginalData()
@@ -147,26 +145,5 @@ class Record implements RecordInterface
         }
 
         return $data;
-    }
-
-    protected function checkDirty() {
-        $dirtyData = array_udiff_assoc(
-            $this->data,
-            $this->originalData,
-            function ($a, $b) {
-                return $a == $b ? 0 : 1; //($a > $b?1:-1);
-            }
-        );
-
-        $isDirty = !empty($dirtyData);
-
-        if ($isDirty !== $this->hasChangedData) {
-            dump('original: ', $this->originalData);
-            dump('data: ', $this->data);
-            dump('changed: ', $this->hasChangedData);
-            dump('isDirty: ', $isDirty);
-            dump('dirty data:', $dirtyData);
-            dd('BYE BYE');
-        }
     }
 }
