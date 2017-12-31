@@ -5,8 +5,6 @@ use Illuminate\Contracts\Events\Dispatcher;
 
 interface PersisterInterface
 {
-    public function insert(Record $record);
-
     public function insertOrUpdate(Record $record);
 
     public function persist();
