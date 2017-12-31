@@ -2,9 +2,11 @@
 
 namespace Persister\contracts;
 
-interface Grammar
+interface GrammarInterface
 {
     public function compileExists(Record $record, $uid);
+
+    public function compileSelectTableRows($tableName, $keyColumns, $keys);
 
     public function compileUpdate(Record $record);
 

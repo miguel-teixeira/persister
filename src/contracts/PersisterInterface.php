@@ -3,7 +3,7 @@ namespace Persister\Contracts;
 
 use Illuminate\Contracts\Events\Dispatcher;
 
-interface Persister
+interface PersisterInterface
 {
     public function insert(Record $record);
 
