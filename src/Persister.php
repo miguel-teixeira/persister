@@ -3,9 +3,9 @@
 namespace Persister;
 
 
+use Persister\Contracts\PersisterInterface;
 use Illuminate\Contracts\Events\Dispatcher;
 use Persister\Contracts\Record;
-use Persister\Contracts\Persister as PersisterInterface;
 
 abstract class Persister implements PersisterInterface
 {
@@ -17,25 +17,18 @@ abstract class Persister implements PersisterInterface
 
     protected $eventDispatcher;
 
-    public function insert(Record $record)
-    {
-        $this->records[] = new RecordDetails($record, 'insert');
-    }
-
     public function insertOrUpdate(Record $record)
     {
-        $this->records[] = new RecordDetails($record, 'insertOrUpdate');
+        $this->records[] = $record;
     }
 
     public function persist()
     {
-        $uids = $this->discoverExistingRecords();
-
-        $this->resolveInsertOrUpdateOperations($uids);
+        $this->discoverExistingRecords();
 
         $this->persistRecords();
 
-        $this->dispatchEvents();
+//        $this->dispatchEvents();
 
         $this->clearRecords();
     }
@@ -56,8 +49,6 @@ abstract class Persister implements PersisterInterface
     }
 
     abstract protected function discoverExistingRecords();
-
-    abstract protected function resolveInsertOrUpdateOperations(array $uids);
 
     abstract protected function persistRecords();
 

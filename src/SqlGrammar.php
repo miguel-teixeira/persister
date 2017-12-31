@@ -4,10 +4,10 @@ namespace Persister;
 
 
 use PDO;
-use Persister\contracts\Grammar;
+use Persister\contracts\GrammarInterface;
 use Persister\contracts\Record;
 
-class SqlGrammar implements Grammar
+class SqlGrammar implements GrammarInterface
 {
     protected $pdo;
 
@@ -16,30 +16,27 @@ class SqlGrammar implements Grammar
         $this->pdo = $pdo;
     }
 
-    public function compileExists(Record $record, $uid)
+    public function compileSelectTableRows($tableName, $keyColumns, $keys)
     {
-        return 'SELECT ' . $this->pdo->quote($uid) .
-            ' FROM ' . $record->getTable() .
-            ' WHERE ' . $record->getKeyColumn() .
-               ' = ' . $this->pdo->quote($record->getKey());
+        $keys = array_map(function($key) {
+            return $this->pdo->quote($key);
+        }, $keys);
+
+        return 'SELECT *' .
+            ' FROM ' . $tableName .
+            ' WHERE ' . $keyColumns .
+                ' IN (' . implode(',', $keys) . ')';
     }
 
     public function compileUpdate(Record $record)
     {
-        $recordData = $record->getData();
-
-        unset($recordData['updated_at']);
+        $recordData = $record->getDataWithUpdatedAt();
 
         $columns = array_map(function ($column) {
             return $this->wrapInBackticks($column);
         }, array_keys($recordData));
 
         $values = array_values($recordData);
-
-        if ($record->usesUpdatedAt()) {
-            $columns[] = 'updated_at';
-            $values[] = date("Y-m-d H:i:s");
-        }
 
         $fields = array_map(function($column, $value) {
             return $column . ' = ' . $this->pdo->quote($value);
@@ -51,29 +48,35 @@ class SqlGrammar implements Grammar
             ' = ' . $this->pdo->quote($record->getKey());
     }
 
-    public function compileInsert(Record $record)
+    public function compileInsertRows(array $records, array $recordsColumns)
     {
         $columns = array_map(function ($column) {
             return $this->wrapInBackticks($column);
-        },  array_keys($record->getData()));
+        },  $recordsColumns);
 
-        $values = array_map(function ($value) {
-            return $this->pdo->quote($value);
-        }, array_values($record->getData()));
+        $rows = [];
 
-        if ($record->usesUpdatedAt()) {
-            $columns[] = 'updated_at';
-            $values[] = $this->pdo->quote(date("Y-m-d H:i:s"));
+        foreach ($records as $record) {
+            $values = [];
+
+            $data = $record->getDataWithTimestamps();
+
+            foreach ($recordsColumns as $recordsColumn) {
+                $values[] = array_has($data, $recordsColumn)
+                    ? $this->pdo->quote($data[$recordsColumn])
+                    : 'NULL';
+            }
+
+            $rows[] = $values;
         }
 
-        if ($record->usesCreatedAt()) {
-            $columns[] = 'created_at';
-            $values[] = $this->pdo->quote(date("Y-m-d H:i:s"));
-        }
+        $rows = array_map(function($row) {
+            return '(' . implode(', ', $row) . ')';
+        }, $rows);
 
         return 'INSERT INTO ' . $record->getTable() .
             ' (' . implode(', ', $columns) . ')' .
-            ' VALUES (' . implode(', ', $values) . ')';
+            ' VALUES ' . implode(', ', $rows);
     }
 
     protected function wrapInBackticks($column) {
