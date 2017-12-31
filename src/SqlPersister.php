@@ -184,26 +184,4 @@ class SqlPersister extends Persister
             }
         }
     }
-
-    protected function getDistinctTables()
-    {
-        $tables = [];
-
-        foreach ($this->records as $record) {
-            if (array_has($tables, strtolower($record->getTable()))) {
-                $tables[] = $record->getTable();
-            }
-        }
-
-        return $tables;
-    }
-
-    protected function getRecordKeys($table)
-    {
-        $keys = [];
-
-        foreach ($this->records as $record) {
-            $keys[] = $record->getKey();
-        }
-    }
 }
