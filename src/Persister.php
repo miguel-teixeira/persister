@@ -3,19 +3,27 @@
 namespace Persister;
 
 
+use PDO;
+use Persister\contracts\GrammarInterface;
 use Persister\Contracts\PersisterInterface;
-use Illuminate\Contracts\Events\Dispatcher;
 use Persister\Contracts\Record;
 
 abstract class Persister implements PersisterInterface
 {
     protected $records = [];
 
-    protected $usesTransaction = false;
+    protected $usesTransaction = true;
 
-    protected $maxStatementsLimit = 500;
+    protected $pdo;
 
-    protected $eventDispatcher;
+    protected $grammar;
+
+    public function __construct(PDO $pdo, GrammarInterface $grammar)
+    {
+        $this->pdo = $pdo;
+
+        $this->grammar = $grammar;
+    }
 
     public function insertOrUpdate(Record $record)
     {
@@ -24,13 +32,27 @@ abstract class Persister implements PersisterInterface
 
     public function persist()
     {
-        $this->discoverExistingRecords();
-
         $this->persistRecords();
 
-//        $this->dispatchEvents();
-
         $this->clearRecords();
+    }
+
+    protected function persistRecords() {
+        $statements = $this->buildInsertOrUpdatedStatements();
+
+        try {
+            $this->beginTransaction();
+
+            foreach ($statements as $statement) {
+                $this->pdo->exec($statement);
+            }
+
+            $this->commitTransaction();
+        } catch (\Exception $e) {
+            $this->rollbackTransaction();
+
+            throw $e;
+        }
     }
 
     public function usesTransaction($boolean)
@@ -38,24 +60,31 @@ abstract class Persister implements PersisterInterface
         $this->usesTransaction = $boolean;
     }
 
-    public function setMaxStatementsLimit($maxStatementsLimit)
-    {
-        $this->maxStatementsLimit = $maxStatementsLimit;
-    }
-
-    public function setEventDispatcher(Dispatcher $dispatcher)
-    {
-        $this->eventDispatcher = $dispatcher;
-    }
-
-    abstract protected function discoverExistingRecords();
-
-    abstract protected function persistRecords();
-
-    abstract protected function dispatchEvents();
+    abstract protected function buildInsertOrUpdatedStatements();
 
     protected function clearRecords()
     {
         $this->records = [];
+    }
+
+    protected function beginTransaction()
+    {
+        if ($this->usesTransaction) {
+            $this->pdo->beginTransaction();
+        }
+    }
+
+    protected function commitTransaction()
+    {
+        if ($this->usesTransaction) {
+            $this->pdo->commit();
+        }
+    }
+
+    protected function rollbackTransaction()
+    {
+        if ($this->usesTransaction) {
+            $this->pdo->rollBack();
+        }
     }
 }

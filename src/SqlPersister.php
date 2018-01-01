@@ -4,21 +4,14 @@ namespace Persister;
 
 
 use PDO;
-use Persister\contracts\GrammarInterface;
-use Persister\events\RecordInserted;
-use Persister\events\RecordUpdated;
 
 class SqlPersister extends Persister
 {
-    protected $pdo;
-
-    protected $grammar;
-
-    public function __construct(PDO $pdo, GrammarInterface $grammar)
+    protected function buildInsertOrUpdatedStatements()
     {
-        $this->pdo = $pdo;
+        $this->discoverExistingRecords();
 
-        $this->grammar = $grammar;
+        return array_merge($this->buildInsertStatements(), $this->buildUpdateStatements());
     }
 
     protected function discoverExistingRecords()
@@ -37,7 +30,7 @@ class SqlPersister extends Persister
         $tables = [];
 
         foreach ($this->records as $record) {
-            $tableName = strtolower($record->getTable());
+            $tableName = $record->getTable();
 
             if (!array_key_exists($tableName, $tables)) {
                 $tables[$tableName] = [
@@ -54,7 +47,7 @@ class SqlPersister extends Persister
 
     protected function fetchTableExistingRecords($tableName, array $table)
     {
-        $sql = $this->grammar->compileSelectTableRows(
+        $sql = $this->grammar->compileSelectRows(
             $tableName,
             $table['keyColumn'],
             $table['keys']
@@ -74,25 +67,6 @@ class SqlPersister extends Persister
                     $record->setOriginalData($existingRecord);
                 }
             }
-        }
-    }
-
-    protected function persistRecords()
-    {
-        $statements = array_merge($this->buildInsertStatements(), $this->buildUpdateStatements());
-
-        try {
-            $this->beginTransaction();
-
-            foreach ($statements as $statement) {
-                $this->pdo->exec($statement);
-            }
-
-            $this->commitTransaction();
-        } catch (\Exception $e) {
-            $this->rollbackTransaction();
-
-            throw $e;
         }
     }
 
@@ -135,7 +109,8 @@ class SqlPersister extends Persister
         return $statements;
     }
 
-    protected function buildUpdateStatements() {
+    protected function buildUpdateStatements()
+    {
         $statements = [];
 
         foreach ($this->records as $record) {
@@ -147,42 +122,5 @@ class SqlPersister extends Persister
         }
 
         return $statements;
-    }
-
-
-    protected function beginTransaction()
-    {
-        if ($this->usesTransaction) {
-            $this->pdo->beginTransaction();
-        }
-    }
-
-    protected function commitTransaction()
-    {
-        if ($this->usesTransaction) {
-            $this->pdo->commit();
-        }
-    }
-
-    protected function rollbackTransaction()
-    {
-        if ($this->usesTransaction) {
-            $this->pdo->rollBack();
-        }
-    }
-
-    protected function dispatchEvents()
-    {
-        if (is_null($this->eventDispatcher)) {
-            return;
-        }
-
-        foreach ($this->records as $record) {
-            if ($record->getOperation() === 'update') {
-                $this->eventDispatcher->dispatch(new RecordUpdated($record));
-            } else {
-                $this->eventDispatcher->dispatch(new RecordInserted($record));
-            }
-        }
     }
 }

@@ -16,7 +16,7 @@ class SqlGrammar implements GrammarInterface
         $this->pdo = $pdo;
     }
 
-    public function compileSelectTableRows($tableName, $keyColumns, $keys)
+    public function compileSelectRows($tableName, $keyColumns, $keys)
     {
         $keys = array_map(function($key) {
             return $this->pdo->quote($key);
@@ -77,6 +77,57 @@ class SqlGrammar implements GrammarInterface
         return 'INSERT INTO ' . $record->getTable() .
             ' (' . implode(', ', $columns) . ')' .
             ' VALUES ' . implode(', ', $rows);
+    }
+
+    public function compileInsertOrUpdateRows(array $records)
+    {
+        $columns = $this->getRecordsColumns($records);
+
+        $rows = [];
+
+        foreach ($records as $record) {
+            $values = [];
+
+            $data = $record->getDataWithTimestamps();
+
+            foreach ($columns as $column) {
+                $values[] = array_has($data, $column)
+                    ? $this->pdo->quote($data[$column])
+                    : 'NULL';
+            }
+
+            $rows[] = $values;
+        }
+
+        $rows = array_map(function($row) {
+            return '(' . implode(', ', $row) . ')';
+        }, $rows);
+
+        $wrappedColumns = array_map(function ($column) {
+            return $this->wrapInBackticks($column);
+        },  $columns);
+
+        $updates = implode(',',
+            array_map(function ($column) {
+                return $column . '= VALUES(' . $column . ')';
+            }, $wrappedColumns)
+        );
+
+        return 'INSERT INTO ' . $record->getTable() .
+            ' (' . implode(', ', $wrappedColumns) . ')' .
+            ' VALUES ' . implode(', ', $rows) .
+            ' ON DUPLICATE KEY UPDATE ' . $updates;
+    }
+
+    protected function getRecordsColumns(array $records)
+    {
+        $columns = [];
+
+        foreach ($records as $record) {
+            $columns = array_unique(array_merge($columns, array_keys($record->getDataWithTimestamps())));
+        }
+
+        return $columns;
     }
 
     protected function wrapInBackticks($column) {
