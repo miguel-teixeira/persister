@@ -136,6 +136,11 @@ class Record implements RecordInterface
         $this->casts = $casts;
     }
 
+    public function mergeData(array $data)
+    {
+        $this->data = array_merge($this->data, $data);
+    }
+
     protected function applyCasts($data)
     {
         foreach ($this->casts as $key => $type) {

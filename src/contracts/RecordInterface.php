@@ -24,6 +24,8 @@ interface Record
 
     public function setCasts(array $casts);
 
+    public function mergeData(array $data);
+
     public function usesUpdatedAt($boolean = null);
 
     public function usesCreatedAt($boolean = null);
