@@ -27,7 +27,13 @@ abstract class Persister implements PersisterInterface
 
     public function insertOrUpdate(Record $record)
     {
-        $this->records[] = $record;
+        $oldRecord = $this->findRecord($record->getTable(), $record->getKeyColumn(), $record->getKey());
+
+        if (is_null($oldRecord)) {
+            $this->records[] = $record;
+        } else {
+            $oldRecord->mergeData($record->getData());
+        }
     }
 
     public function persist()
@@ -86,5 +92,19 @@ abstract class Persister implements PersisterInterface
         if ($this->usesTransaction) {
             $this->pdo->rollBack();
         }
+    }
+
+    protected function findRecord($tableName, $keyColumn, $keyValue)
+    {
+        foreach ($this->records as $record) {
+            if ($record->getTable() === $tableName
+                && $record->getKeyColumn() === $keyColumn
+                && $record->getKey() === $keyValue
+            ) {
+                return $record;
+            }
+        }
+
+        return null;
     }
 }
