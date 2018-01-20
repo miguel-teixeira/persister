@@ -50,6 +50,7 @@ abstract class Persister implements PersisterInterface
             $this->beginTransaction();
 
             foreach ($statements as $statement) {
+//                dump($statement);
                 $this->pdo->exec($statement);
             }
 
