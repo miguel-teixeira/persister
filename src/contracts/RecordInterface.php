@@ -8,7 +8,7 @@ interface Record
 
     public function getKeyColumn();
 
-    public function getKey();
+    public function getKey(): string;
 
     public function getData();
 

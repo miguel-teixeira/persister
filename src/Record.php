@@ -59,7 +59,7 @@ class Record implements RecordInterface
         return $this->keyColumn;
     }
 
-    public function getKey()
+    public function getKey(): string
     {
         return $this->key;
     }
