@@ -62,7 +62,7 @@ class SqlPersister extends Persister
         foreach ($this->records as $record) {
             foreach ($existingRecords as $existingRecord) {
                 if ($record->getTable() === $tableName
-                    && $record->getKey() === $existingRecord[$record->getKeyColumn()]
+                    && $record->getKey() === (string) $existingRecord[$record->getKeyColumn()]
                 ) {
                     $record->setOriginalData($existingRecord);
                 }
