@@ -38,9 +38,13 @@ abstract class Persister implements PersisterInterface
 
     public function persist()
     {
-        $this->persistRecords();
-
-        $this->clearRecords();
+        try {
+            $this->persistRecords();
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            $this->clearRecords();
+        }
     }
 
     protected function persistRecords() {
@@ -65,6 +69,11 @@ abstract class Persister implements PersisterInterface
     public function usesTransaction($boolean)
     {
         $this->usesTransaction = $boolean;
+    }
+
+    public function flush()
+    {
+        $this->clearRecords();
     }
 
     abstract protected function buildInsertOrUpdatedStatements();
@@ -95,7 +104,7 @@ abstract class Persister implements PersisterInterface
         }
     }
 
-    protected function findRecord($tableName, $keyColumn, $keyValue)
+    protected function findRecord($tableName, $keyColumn, string $keyValue)
     {
         foreach ($this->records as $record) {
             if ($record->getTable() === $tableName
